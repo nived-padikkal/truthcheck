@@ -1,0 +1,5 @@
+-r requirements.txt
+pytest
+httpx
+# CIFAKE training reads the HF parquet mirror (training/train_cifake.py)
+pyarrow

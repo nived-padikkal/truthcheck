@@ -1,0 +1,18 @@
+fastapi
+uvicorn[standard]
+python-multipart
+# <1.10: PassiveAggressiveClassifier (text model, report §4.3) is scheduled
+# for removal in 1.10 - retrain with SGDClassifier(pa1) before moving past it.
+scikit-learn<1.10
+joblib
+pandas
+numpy
+pillow
+requests
+
+# Media / deepfake detection model. TensorFlow has no wheels for Python 3.14
+# yet, so the marker installs it only on Python 3.10-3.13. The API runs fine
+# without it: /analyze/image and /analyze/video return UNKNOWN until you
+# install TensorFlow and train (or drop in) app/models/meso4.h5.
+tensorflow; python_version < "3.14"
+opencv-python

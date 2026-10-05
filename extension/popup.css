@@ -1,0 +1,287 @@
+:root {
+  --bg: #10151c;
+  --panel: #1a212b;
+  --border: #2a3442;
+  --text: #e6edf3;
+  --muted: #8b98a8;
+  --fake: #ef5350;
+  --real: #66bb6a;
+  --unknown: #78909c;
+  --error: #ba68c8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  width: 340px;
+  margin: 0;
+  padding: 12px;
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 15px;
+  letter-spacing: 0.3px;
+}
+
+.brand p {
+  margin: 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.dot {
+  margin-left: auto;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--unknown);
+  box-shadow: 0 0 0 3px rgba(120, 144, 156, 0.18);
+}
+
+.dot.ok {
+  background: var(--real);
+  box-shadow: 0 0 0 3px rgba(102, 187, 106, 0.18);
+}
+
+.dot.down {
+  background: var(--fake);
+  box-shadow: 0 0 0 3px rgba(239, 83, 80, 0.18);
+}
+
+.input {
+  margin-top: 10px;
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 96px;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: #3f6ea8;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 8px 0;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.actions {
+  display: flex;
+  gap: 7px;
+}
+
+button {
+  border: 0;
+  border-radius: 7px;
+  padding: 8px 12px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.15s ease, background 0.15s ease;
+}
+
+button:hover {
+  filter: brightness(1.12);
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+button.primary {
+  background: #2f6feb;
+  color: #fff;
+  flex: 1;
+}
+
+button.ghost {
+  background: var(--panel);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+.result {
+  margin-top: 12px;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--panel);
+}
+
+.result-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.badge {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+}
+
+.badge.FAKE {
+  color: var(--fake);
+}
+
+.badge.REAL {
+  color: var(--real);
+}
+
+.badge.UNKNOWN {
+  color: var(--unknown);
+}
+
+.badge.ERROR {
+  color: var(--error);
+}
+
+.confidence {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.meter {
+  margin: 8px 0;
+  height: 7px;
+  border-radius: 4px;
+  background: #0d1117;
+  overflow: hidden;
+}
+
+.meter-fill {
+  height: 100%;
+  width: 0;
+  background: var(--unknown);
+  transition: width 0.45s ease;
+}
+
+.meter-fill.FAKE {
+  background: var(--fake);
+}
+
+.meter-fill.REAL {
+  background: var(--real);
+}
+
+.meta {
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.signals {
+  margin: 7px 0 0;
+  padding-left: 16px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.signals li {
+  margin-bottom: 2px;
+}
+
+.error {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  background: rgba(239, 83, 80, 0.12);
+  border: 1px solid rgba(239, 83, 80, 0.4);
+  color: #ff8a80;
+  font-size: 12px;
+  word-break: break-word;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 11px;
+  padding-top: 9px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.api-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.api-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 7px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--muted);
+  font: 11px ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.api-row input:focus {
+  outline: none;
+  border-color: #3f6ea8;
+  color: var(--text);
+}
+
+.team {
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.hidden {
+  display: none;
+}
+
+.spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  vertical-align: -2px;
+  margin-right: 6px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

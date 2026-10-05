@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TruthCheck</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header class="header">
+    <img src="icons/icon48.png" alt="" width="28" height="28" />
+    <div class="brand">
+      <h1>TruthCheck</h1>
+      <p>Verify before you trust</p>
+    </div>
+    <span id="health-dot" class="dot" title="Backend status"></span>
+  </header>
+
+  <section class="input">
+    <textarea
+      id="text"
+      rows="6"
+      placeholder="Paste a headline, claim or article, or use the right-click menu on any page..."
+      spellcheck="true"
+    ></textarea>
+
+    <label class="toggle">
+      <input type="checkbox" id="verify" checked />
+      <span>Cross-check with fact-check sources</span>
+    </label>
+
+    <div class="actions">
+      <button id="analyze" class="primary">Analyze</button>
+      <button id="selection" class="ghost">Use selection</button>
+      <button id="clear" class="ghost">Clear</button>
+    </div>
+  </section>
+
+  <div id="error" class="error hidden"></div>
+
+  <section id="result" class="result hidden">
+    <div class="result-top">
+      <span id="badge" class="badge">--</span>
+      <span id="confidence" class="confidence">0%</span>
+    </div>
+    <div class="meter"><div id="meter-fill" class="meter-fill"></div></div>
+    <div id="meta" class="meta"></div>
+    <ul id="signals" class="signals"></ul>
+  </section>
+
+  <footer class="footer">
+    <label class="api-row">
+      <span>API</span>
+      <input id="api" type="text" spellcheck="false" placeholder="http://localhost:8000" />
+    </label>
+    <span class="team">Team SyntaxX</span>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>

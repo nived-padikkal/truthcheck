@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Datasets and trained models (regenerate with training/)
+backend/data/*
+!backend/data/.gitkeep
+backend/app/models/*
+!backend/app/models/.gitkeep
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# local run/install logs
+*.log
+*.err
