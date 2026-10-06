@@ -1,24 +1,9 @@
-// TruthCheck content script: shows analysis results as an overlay on the page.
+// TruthCheck content script: brief "Analyzing..." spinner on the page.
+// Results are NOT injected here - they open in the extension popup.
 (() => {
   const HOST_ID = "truthcheck-overlay";
-  const COLORS = {
-    FAKE: "#ef4444",
-    REAL: "#22c55e",
-    UNKNOWN: "#b45309",
-    ERROR: "#7c3aed",
-    STATUS: "#0f2a85",
-  };
   const BRAND = "#0f2a85";
-  const RING_R = 52;
-  const RING_CIRC = 2 * Math.PI * RING_R; // 326.73
   let hideTimer = null;
-
-  const VERDICT_TEXT = {
-    FAKE: "FAKE",
-    REAL: "NO MANIPULATION FOUND",
-    UNKNOWN: "INCONCLUSIVE",
-    ERROR: "ERROR",
-  };
 
   function esc(value) {
     return String(value).replace(/[&<>"']/g, (c) => ({
@@ -30,97 +15,6 @@
     })[c]);
   }
 
-  function detailItems(d) {
-    // model / frames / latency live in the footer chips, not the list.
-    const items = [];
-    if (Array.isArray(d.checks) && d.checks.length) {
-      items.push(`checks: ${d.checks.map((c) => `${c.model} ${(c.p_fake * 100).toFixed(0)}% fake`).join(" | ")}`);
-    }
-    if (d.image_size) items.push(`image: ${d.image_size.join("x")}`);
-    if (d.verification) {
-      const v = d.verification;
-      items.push(v.found ? `verification: ${v.method} (score ${v.score})` : "verification: no external signal");
-    }
-    if (d.error) items.push(`error: ${d.error}`);
-    return items;
-  }
-
-  function chips(d) {
-    const out = [];
-    if (d.model) out.push(d.model_loaded === false ? `${d.model} (untrained)` : d.model);
-    if (typeof d.frames_analyzed === "number") out.push(`${d.frames_analyzed} frames`);
-    if (d.latency_ms != null) out.push(`${Math.round(d.latency_ms)} ms`);
-    if (d.error && !out.length) out.push("failed");
-    return out;
-  }
-
-  function tierOf(verdict, pct) {
-    if (verdict === "FAKE" || verdict === "ERROR") return "high";
-    if (verdict === "REAL") return "low";
-    if (pct >= 75) return "high";
-    if (pct >= 45) return "medium";
-    return "low";
-  }
-
-  function render({ verdict, confidence, details }) {
-    const host = ensureHost();
-    const d = details || {};
-    verdict = verdict || "UNKNOWN";
-    const pct = Math.round((confidence || 0) * 100);
-    const color = COLORS[verdict] || COLORS.UNKNOWN;
-    const offset = RING_CIRC * (1 - pct / 100);
-    const items = detailItems(d);
-    const label = VERDICT_TEXT[verdict] || verdict;
-    const tier = tierOf(verdict, pct);
-    // A confidence meter only makes sense for a decisive verdict; UNKNOWN is
-    // "inconclusive" and must never render as "Confidence: 0%".
-    const showBar = (verdict === "REAL" || verdict === "FAKE") && pct > 0;
-    const note =
-      verdict === "UNKNOWN" ? "Inconclusive - not enough evidence either way" : "";
-    const chipHtml = chips(d)
-      .map((c) => `<span class="tc-chip">${esc(c)}</span>`)
-      .join("");
-
-    host.innerHTML = `
-      <div class="tc-card">
-        <div class="tc-head">
-          <span class="tc-brand">TRUTHCHECK</span>
-          <button class="tc-close" title="Dismiss" aria-label="Dismiss">&times;</button>
-        </div>
-        <div class="tc-body">
-          <div class="tc-main">
-            ${showBar ? `
-            <div class="tc-ring">
-              <svg viewBox="0 0 120 120" aria-hidden="true">
-                <circle class="tc-ring-bg" cx="60" cy="60" r="${RING_R}"></circle>
-                <circle class="tc-ring-fg" cx="60" cy="60" r="${RING_R}"
-                  style="stroke:${color};stroke-dasharray:${RING_CIRC.toFixed(2)};
-                  stroke-dashoffset:${offset.toFixed(2)}"></circle>
-              </svg>
-              <div class="tc-ring-value"><span>${pct}</span><i>%</i></div>
-            </div>` : ""}
-            <div class="tc-verdict-block">
-              <div class="tc-verdict" style="color:${color};font-size:${label.length > 8 ? 18 : 26}px">${esc(label)}</div>
-              ${showBar ? `<div class="tc-tier tc-tier-${tier}">${tier === "high" ? "High" : tier === "medium" ? "Medium" : "Low"} confidence</div>` : ""}
-              ${note ? `<div class="tc-note">${esc(note)}</div>` : ""}
-            </div>
-          </div>
-          ${d.reason ? `<div class="tc-reason">${esc(d.reason)}</div>` : ""}
-          ${items.length ? `
-            <div class="tc-details">
-              <div class="tc-details-head">Details <span class="tc-count">${items.length}</span></div>
-              <ul class="tc-list">${items.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>
-            </div>` : ""}
-        </div>
-        ${chipHtml ? `<div class="tc-foot">${chipHtml}</div>` : ""}
-      </div>`;
-
-    host.querySelector(".tc-close").addEventListener("click", remove);
-    const card = host.querySelector(".tc-card");
-    card.addEventListener("mouseenter", () => clearTimeout(hideTimer));
-    card.addEventListener("mouseleave", () => scheduleHide(6000));
-    scheduleHide(12000);
-  }
 
   function renderStatus(label) {
     const host = ensureHost();
@@ -266,7 +160,8 @@
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (!msg || !msg.type) return false;
     if (msg.type === "TC_RESULT") {
-      render(msg.result || {});
+      // Result goes to the popup only - just clear the "Analyzing..." spinner.
+      remove();
       sendResponse && sendResponse({ ok: true });
     } else if (msg.type === "TC_STATUS") {
       renderStatus(msg.label);
