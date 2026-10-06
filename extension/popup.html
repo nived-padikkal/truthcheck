@@ -2,57 +2,89 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TruthCheck</title>
   <link rel="stylesheet" href="popup.css" />
 </head>
 <body>
-  <header class="header">
-    <img src="icons/icon48.png" alt="" width="28" height="28" />
-    <div class="brand">
+  <div class="title-bar">
+    <div class="title-bar-left">
+      <img src="icons/icon48.png" alt="TruthCheck" class="title-logo" />
       <h1>TruthCheck</h1>
-      <p>Verify before you trust</p>
+      <span id="health-dot" class="dot" title="Backend status"></span>
     </div>
-    <span id="health-dot" class="dot" title="Backend status"></span>
-  </header>
-
-  <section class="input">
-    <textarea
-      id="text"
-      rows="6"
-      placeholder="Paste a headline, claim or article, or use the right-click menu on any page..."
-      spellcheck="true"
-    ></textarea>
-
-    <label class="toggle">
-      <input type="checkbox" id="verify" checked />
-      <span>Cross-check with fact-check sources</span>
-    </label>
-
-    <div class="actions">
-      <button id="analyze" class="primary">Analyze</button>
-      <button id="selection" class="ghost">Use selection</button>
-      <button id="clear" class="ghost">Clear</button>
+    <div class="title-bar-actions">
+      <button class="refresh-button" id="refreshButton" aria-label="Refresh" data-tooltip="Refresh · R">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12a9 9 0 1 1-2.64-6.36"></path>
+          <path d="M21 3v6h-6"></path>
+        </svg>
+      </button>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" data-tooltip="Theme · T">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+        </svg>
+      </button>
+      <button class="options-button" id="optionsButton" aria-label="Settings" data-tooltip="Settings · S">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
     </div>
-  </section>
+  </div>
 
-  <div id="error" class="error hidden"></div>
-
-  <section id="result" class="result hidden">
-    <div class="result-top">
-      <span id="badge" class="badge">--</span>
-      <span id="confidence" class="confidence">0%</span>
+  <div class="container">
+    <div class="status-section">
+      <p class="subtitle" id="subtitle">Verify before you trust.</p>
     </div>
-    <div class="meter"><div id="meter-fill" class="meter-fill"></div></div>
-    <div id="meta" class="meta"></div>
-    <ul id="signals" class="signals"></ul>
-  </section>
+
+    <div class="confidence-section">
+      <div class="confidence-header">
+        <span class="confidence-title">Confidence Score</span>
+        <span class="confidence-label" id="confidenceLabel">—</span>
+      </div>
+      <div class="confidence-circle-container">
+        <div class="confidence-circle" id="confidenceCircle">
+          <svg class="circle-svg" viewBox="0 0 120 120">
+            <circle class="circle-bg" cx="60" cy="60" r="54"></circle>
+            <circle class="circle-progress" id="circleProgress" cx="60" cy="60" r="54"></circle>
+          </svg>
+          <div class="confidence-value-container">
+            <span class="confidence-value" id="confidenceValue">0</span>
+            <span class="confidence-unit">%</span>
+          </div>
+        </div>
+        <div class="verdict-container">
+          <div class="verdict-label">Verdict</div>
+          <div class="verdict-text" id="badge">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="details-section hidden" id="result">
+      <div class="section-header">
+        <span class="section-title">Details</span>
+      </div>
+      <div class="meta" id="meta"></div>
+
+      <div class="section-header signals-header">
+        <span class="section-title">Signals</span>
+        <span class="pattern-count" id="signalCount">0</span>
+      </div>
+      <ul class="pattern-list" id="signals"></ul>
+    </div>
+
+    <p class="hint" id="hint">Right-click selected text, an image or a video and choose TruthCheck to analyze it.</p>
+  </div>
 
   <footer class="footer">
-    <label class="api-row">
-      <span>API</span>
-      <input id="api" type="text" spellcheck="false" placeholder="http://localhost:8000" />
-    </label>
     <span class="team">Team SyntaxX</span>
+    <button class="link-button" id="footerSettings">Settings</button>
   </footer>
 
   <script src="popup.js"></script>
