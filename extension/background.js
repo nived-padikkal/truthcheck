@@ -146,7 +146,19 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   const delivered = await sendToTab(tabId, payload);
   await chrome.storage.local.set({ lastResult: payload, lastDelivered: delivered });
   updateBadge(tabId, result.verdict);
+  await openResultPopup();
 });
+
+// Chrome 127+ allows opening the action popup from the service worker. Failures
+// (older Chrome, unpinned icon) are swallowed: the badge + overlay still show.
+async function openResultPopup() {
+  if (!chrome.action || typeof chrome.action.openPopup !== "function") return;
+  try {
+    await chrome.action.openPopup();
+  } catch (_) {
+    /* popup could not open - user can click the icon */
+  }
+}
 
 // Popup asks the background worker for the latest health snapshot.
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {

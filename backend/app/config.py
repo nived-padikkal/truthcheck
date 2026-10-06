@@ -19,17 +19,17 @@ CIFAKE_MODEL_PATH = MODELS_DIR / "cifake_model.h5"
 # lands on 0.5 for every downstream consumer. Override with TC_CIFAKE_THR.
 CIFAKE_THRESHOLD = float(os.getenv("TC_CIFAKE_THR", "0.015"))
 
-# Optional: Google Fact Check Tools API key. When absent, verification falls
-# back to offline claim markers (see verify_service).
-FACT_CHECK_API_KEY = os.getenv("FACT_CHECK_API_KEY", "").strip()
-FACT_CHECK_URL = "https://factchecktools.googleapis.com/v1alpha1/claims:search"
+# # Optional: Google Fact Check Tools API key. When absent, verification falls
+# # back to offline claim markers (see verify_service).
+# FACT_CHECK_API_KEY = os.getenv("FACT_CHECK_API_KEY", "").strip()
+# FACT_CHECK_URL = "https://factchecktools.googleapis.com/v1alpha1/claims:search"
 
-# Optional: Google Programmable Search (CSE) - report §1's "Google Search
-# API" hook. Needs an API key plus the search engine id (cx). When both are
-# set, verification searches "<claim> fact check" and scores the snippets.
-GOOGLE_SEARCH_KEY = os.getenv("GOOGLE_SEARCH_KEY", "").strip()
-GOOGLE_CSE_ID = os.getenv("GOOGLE_CSE_ID", "").strip()
-GOOGLE_SEARCH_URL = "https://www.googleapis.com/customsearch/v1"
+# # Optional: Google Programmable Search (CSE) - report §1's "Google Search
+# # API" hook. Needs an API key plus the search engine id (cx). When both are
+# # set, verification searches "<claim> fact check" and scores the snippets.
+# GOOGLE_SEARCH_KEY = os.getenv("GOOGLE_SEARCH_KEY", "").strip()
+# GOOGLE_CSE_ID = os.getenv("GOOGLE_CSE_ID", "").strip()
+# GOOGLE_SEARCH_URL = "https://www.googleapis.com/customsearch/v1"
 
 # Hybrid verification blend weights (must sum to 1.0 for the plain weighted
 # average; they are normalized anyway inside verify_service.combine).

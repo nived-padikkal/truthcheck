@@ -182,6 +182,15 @@ async function restoreLastResult() {
   }
 }
 
+// Popup already open when a new result lands: re-render in place.
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== "local" || !changes.lastResult) return;
+  const lastResult = changes.lastResult.newValue;
+  renderResult(
+    lastResult && Date.now() - lastResult.at < 10 * 60 * 1000 ? lastResult.result : null
+  );
+});
+
 function openSettings() {
   if (chrome.runtime.openOptionsPage) chrome.runtime.openOptionsPage();
 }
