@@ -1,10 +1,8 @@
-// TruthCheck popup: shows the latest analysis result (from the right-click
-// menu) plus backend health. Settings live on the options page.
+// TruthCheck popup: paste text (or grab the page selection) and analyze it.
 const DEFAULT_API = "http://localhost:8000";
 const $ = (id) => document.getElementById(id);
 
 let apiBase = DEFAULT_API;
-const RING_CIRCUMFERENCE = 339.292; // 2 * PI * 54
 
 function esc(value) {
   return String(value).replace(/[&<>"']/g, (c) => ({
@@ -16,50 +14,16 @@ function esc(value) {
   })[c]);
 }
 
-function setSubtitle(text) {
-  const el = $("subtitle");
-  if (el) el.textContent = text;
-}
-
-function tierOf(verdict, pct) {
-  if (verdict === "FAKE" || verdict === "ERROR") return "high";
-  if (verdict === "REAL") return "low";
-  if (pct >= 75) return "high";
-  if (pct >= 45) return "medium";
-  return "low";
-}
-
-function resetRing() {
-  const ring = $("circleProgress");
-  ring.style.strokeDashoffset = String(RING_CIRCUMFERENCE);
-  ring.className = "circle-progress";
-  $("confidenceValue").textContent = "0";
-  $("confidenceLabel").textContent = "—";
-  $("confidenceLabel").className = "confidence-label";
-  const badge = $("badge");
-  badge.textContent = "—";
-  badge.className = "verdict-text";
-  $("signalCount").textContent = "0";
-}
-
-async function applyTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  await chrome.storage.local.set({ theme });
-}
-
-function toggleTheme() {
-  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
-  applyTheme(next);
-}
-
-async function loadTheme() {
-  const { theme } = await chrome.storage.local.get("theme");
-  document.documentElement.dataset.theme = theme === "dark" ? "dark" : "light";
-}
-
 async function loadSettings() {
   const { apiBase: stored } = await chrome.storage.local.get("apiBase");
   apiBase = (stored || DEFAULT_API).replace(/\/+$/, "");
+  $("api").value = apiBase;
+}
+
+async function saveSettings() {
+  apiBase = ($("api").value || DEFAULT_API).replace(/\/+$/, "");
+  await chrome.storage.local.set({ apiBase });
+  checkHealth();
 }
 
 async function checkHealth() {
@@ -74,7 +38,6 @@ async function checkHealth() {
       dot.title = `Backend online · text model: ${models.text ? "loaded" : "not trained"} · meso4: ${
         models.meso4 ? "loaded" : "not trained"
       }`;
-      if ($("subtitle").textContent.startsWith("Backend")) setSubtitle("Verify before you trust.");
       return;
     }
     throw new Error("bad status");
@@ -82,8 +45,18 @@ async function checkHealth() {
     dot.classList.remove("ok");
     dot.classList.add("down");
     dot.title = "Backend unreachable - start it with: uvicorn app.main:app --reload --port 8000";
-    setSubtitle("Backend unreachable - start uvicorn on port 8000.");
   }
+}
+
+function showError(message) {
+  const el = $("error");
+  if (!message) {
+    el.classList.add("hidden");
+    el.textContent = "";
+    return;
+  }
+  el.textContent = message;
+  el.classList.remove("hidden");
 }
 
 function metaLines(result) {
@@ -123,18 +96,10 @@ function signalItems(result) {
   return items;
 }
 
-function showHint(show) {
-  const hint = $("hint");
-  if (hint) hint.classList.toggle("hidden", !show);
-}
-
 function renderResult(result) {
   const box = $("result");
   if (!result) {
     box.classList.add("hidden");
-    resetRing();
-    setSubtitle("Verify before you trust.");
-    showHint(true);
     return;
   }
   const verdict = result.verdict || "UNKNOWN";
@@ -142,68 +107,101 @@ function renderResult(result) {
 
   const badge = $("badge");
   badge.textContent = verdict;
-  badge.className = `verdict-text ${verdict}`;
+  badge.className = `badge ${verdict}`;
 
-  $("confidenceValue").textContent = String(pct);
-  const ring = $("circleProgress");
-  ring.style.strokeDashoffset = String(RING_CIRCUMFERENCE * (1 - pct / 100));
-  const tier = tierOf(verdict, pct);
-  ring.className = `circle-progress ${tier}`;
+  $("confidence").textContent = `${pct}%`;
 
-  const label = $("confidenceLabel");
-  label.textContent = tier === "high" ? "High" : tier === "medium" ? "Medium" : "Low";
-  label.className = `confidence-label ${tier}`;
+  const fill = $("meter-fill");
+  fill.style.width = `${pct}%`;
+  fill.className = `meter-fill ${verdict}`;
 
   $("meta").innerHTML = metaLines(result).map((l) => `<div>${esc(l)}</div>`).join("");
 
   const items = signalItems(result);
   $("signals").innerHTML = items.map((s) => `<li>${esc(s)}</li>`).join("");
-  $("signalCount").textContent = String(items.length);
 
   box.classList.remove("hidden");
-  showHint(false);
-  setSubtitle(
-    verdict === "FAKE"
-      ? "Manipulation detected - review the signals below."
-      : verdict === "REAL"
-      ? "No manipulation found in this content."
-      : verdict === "ERROR"
-      ? "Analysis failed - see the details below."
-      : "Inconclusive - not enough evidence either way."
-  );
+}
+
+async function analyze() {
+  const text = $("text").value.trim();
+  const button = $("analyze");
+  showError("");
+  if (!text) {
+    showError("Paste or select some text first.");
+    return;
+  }
+  button.disabled = true;
+  button.innerHTML = '<span class="spinner"></span>Analyzing';
+  try {
+    const resp = await fetch(`${apiBase}/analyze/text`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, verify: $("verify").checked }),
+      signal: AbortSignal.timeout(60000),
+    });
+    if (!resp.ok) {
+      let detail = `HTTP ${resp.status}`;
+      try {
+        const body = await resp.json();
+        if (body.detail) detail += `: ${typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail)}`;
+      } catch (_) {
+        /* ignore */
+      }
+      throw new Error(detail);
+    }
+    const result = await resp.json();
+    renderResult(result);
+    await chrome.storage.local.set({
+      lastResult: { type: "TC_RESULT", kind: "text", result, at: Date.now() },
+    });
+  } catch (err) {
+    showError(`Analysis failed: ${err && err.message ? err.message : err}`);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Analyze";
+  }
+}
+
+async function useSelection() {
+  showError("");
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab || tab.id == null) throw new Error("no active tab");
+    const reply = await chrome.tabs.sendMessage(tab.id, { type: "TC_GET_SELECTION" });
+    const selected = (reply && reply.text || "").trim();
+    if (!selected) {
+      throw new Error("Nothing selected on this page - select text first, or paste it below.");
+    }
+    $("text").value = selected;
+    await analyze();
+  } catch (err) {
+    showError(err && err.message ? err.message : String(err));
+  }
+}
+
+function clearAll() {
+  $("text").value = "";
+  showError("");
+  renderResult(null);
 }
 
 async function restoreLastResult() {
   const { lastResult } = await chrome.storage.local.get("lastResult");
   if (lastResult && Date.now() - lastResult.at < 10 * 60 * 1000) {
     renderResult(lastResult.result);
-  } else {
-    renderResult(null);
   }
 }
 
-function openSettings() {
-  if (chrome.runtime.openOptionsPage) chrome.runtime.openOptionsPage();
-}
-
 document.addEventListener("DOMContentLoaded", async () => {
-  await loadTheme();
   await loadSettings();
   await checkHealth();
   await restoreLastResult();
-
-  $("refreshButton").addEventListener("click", checkHealth);
-  $("themeToggle").addEventListener("click", toggleTheme);
-  $("optionsButton").addEventListener("click", openSettings);
-  $("footerSettings").addEventListener("click", openSettings);
-
-  document.addEventListener("keydown", (e) => {
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
-    const tag = (e.target && e.target.tagName) || "";
-    if (tag === "INPUT" || tag === "TEXTAREA") return;
-    const key = e.key.toLowerCase();
-    if (key === "t") toggleTheme();
-    else if (key === "r") checkHealth();
-    else if (key === "s") openSettings();
+  $("analyze").addEventListener("click", analyze);
+  $("selection").addEventListener("click", useSelection);
+  $("clear").addEventListener("click", clearAll);
+  $("api").addEventListener("change", saveSettings);
+  $("text").addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") analyze();
   });
 });

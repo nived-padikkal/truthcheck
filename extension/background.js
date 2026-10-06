@@ -110,29 +110,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       result = await analyzeText(info.selectionText);
     } else {
       if (!info.srcUrl) throw new Error("media URL not available");
-      // Image only: info.srcUrl is frequently a thumbnail (e.g. 707x434
-      // instead of 1465x900). Ask the page for the largest candidate.
-      let url = info.srcUrl;
-      if (kind === "image") {
-        try {
-          const best = await chrome.tabs.sendMessage(tabId, {
-            type: "TC_BEST_SRC",
-            fallbackUrl: info.srcUrl,
-          });
-          if (best && best.src) url = best.src;
-        } catch (_) {
-          /* content script not available: use info.srcUrl */
-        }
-      }
-      try {
-        result = await analyzeMedia(url, kind);
-      } catch (err) {
-        if (kind === "image" && url !== info.srcUrl) {
-          result = await analyzeMedia(info.srcUrl, kind); // retry with srcUrl
-        } else {
-          throw err;
-        }
-      }
+      result = await analyzeMedia(info.srcUrl, kind);
     }
   } catch (err) {
     result = {
